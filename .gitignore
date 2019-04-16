@@ -1,3 +1,5 @@
 .pswd
 .credentials
 .ipynb_checkpoints/
+.credentials
+.twittercredentials
