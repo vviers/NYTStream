@@ -1,5 +1,6 @@
 import requests
 from time import sleep
+import json
 
 # Read API key
 with open(".credentials", "r") as f:
@@ -23,13 +24,14 @@ while True:
 
     for article in data["results"]:
         if article['title'] not in seen:
-            print("Found a new article!")
 
-            print(f"It is called {article['title']}")
+            print(f"Found a new article:\n\t {article['title']}")
 
             seen.add(article['title'])
                   
-            with open("some_data.txt", "a") as outfile:
-                outfile.write(str(article) + "\n")
+            #with open("some_data.txt", "a") as outfile:
+            #    outfile.write(str(article) + "\n")
+            with open("some_data_json.txt", "a") as outfile:
+                outfile.write(json.dumps(article) + "\n")
                   
     sleep(120)
