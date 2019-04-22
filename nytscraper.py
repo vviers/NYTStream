@@ -1,3 +1,6 @@
+#!/bin/python
+
+from kafka import SimpleProducer, KafkaClient
 import requests
 from time import sleep
 import json
@@ -8,6 +11,12 @@ with open(".credentials", "r") as f:
     
 # create a set to keep track of already seen articles
 seen = set()
+
+# Kafka settings
+topic = 'NYTARTICLES'
+# Kafka producer
+kafka = KafkaClient('localhost:9092')
+producer = SimpleProducer(kafka)
 
 while True:
     
@@ -29,9 +38,9 @@ while True:
 
             seen.add(article['title'])
                   
-            #with open("some_data.txt", "a") as outfile:
-            #    outfile.write(str(article) + "\n")
             with open("some_data_json.txt", "a") as outfile:
                 outfile.write(json.dumps(article) + "\n")
+            
+            producer.send_messages(topic, json.dumps(article).encode("utf-8"))
                   
-    sleep(120)
+    sleep(240)
