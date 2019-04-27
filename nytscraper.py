@@ -13,7 +13,7 @@ with open(".credentials", "r") as f:
 seen = set()
 
 # Kafka settings
-topic = 'NYTARTICLES'
+topic = 'raw_articles'
 # Kafka producer
 kafka = KafkaClient('localhost:9092')
 producer = SimpleProducer(kafka)

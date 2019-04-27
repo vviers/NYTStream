@@ -1,15 +1,17 @@
 import json
 import requests
 from kafka import SimpleProducer, KafkaClient, KafkaConsumer
-import pyspark
+from pyspark import SparkContext
+from pyspark.sql import *
 import random
+from time import sleep
 
 # NYT Credentials
 with open(".credentials", "r") as f:
     key = f.read().strip("\n")
-    
+
+
 def getTags(tweet):
-    
     '''retrieve all tags about organisations, people, and places for a given article'''
     
     def tags(tag):   
@@ -25,7 +27,6 @@ def getTags(tweet):
 
     
 def getSemantic(concept, concept_type, key = key):
-    
     '''query the NewYorkTimes semantic API'''
     
     types = {'des':'nytd_des', 'geo':'nytd_geo', 'org':'nytd_org', 'per':'nytd_per'}
@@ -42,8 +43,8 @@ def getSemantic(concept, concept_type, key = key):
     # query the API, return JSON (as a python dict)
     result_dic = requests.get(url)
     if result_dic.status_code != 200:
-        print("Something went wrong...")
-        
+        print(f"Something went wrong with the API call... Status Code: {result_dic.status_code}")
+        return []
     if len(result_dic.json()['results']) == 0:
         return []
     
@@ -51,7 +52,6 @@ def getSemantic(concept, concept_type, key = key):
 
 
 def yagoExists(semantic):
-    
     '''Check whether a given NYT semantic concept could be found in Yago database.
        This uses the fact that Yago concepts use their Wikipedia name.'''
     
@@ -62,9 +62,9 @@ def yagoExists(semantic):
         if link["link_type"] == "wikipedia_raw_name":
             print("You may be able to find this concept on wikipedia:")
             print("https://en.wikipedia.org/wiki/" + link["link"])
-            return link["link"]
-        
+            return link["link"]       
     return False
+
 
 def extractYago(tags):
     '''Get the Yago/WikiData tags'''
@@ -74,24 +74,78 @@ def extractYago(tags):
         yagoconcepts += [yagoExists(s) for s in semantics]
     return [y for y in yagoconcepts if y]
 
+def str_cleaner(s):
+    '''Makes the Yago names more readable.'''
+    return s.replace("<", "").replace(">", "").replace("_", " ")
+
+def data_enhancer(subject):
+    
+    # subset the data to the subject
+    subset = df.filter(f'subject == "{subject}"').collect()
+    
+    # make sure data is not empty
+    if len(subset) == 0:
+        return "\nNo Info...\n"
+    
+    # get a fact at random
+    fact = random.choice(subset).asDict()
+    
+    # get URL of object
+    url = "https://en.wikipedia.org/wiki/" + fact["object"].replace("<", "").replace(">", "")
+    
+    # generate the tweet
+    tweet = str_cleaner(f'{fact["subject"]} {fact["predicate"]} {fact["object"]}') + f'\n {url}'
+    
+    return tweet
+
 
 if __name__ == "__main__":
     
-    # consume Tweets with Kafka
+    # Start Spark
+    sc = SparkContext(appName="NYT_Yago")
+    spark = SparkSession.builder \
+    .master("local") \
+    .appName("NYT_Yago").getOrCreate()
     
-    # extract
-    tags = getTags(tweet)
-    yago_tags = extractYago(tags)
+    # Load Static Yago Data
+    df = sc.textFile("file:///home/vincent/NYT_Stream/data/yagoFacts.tsv")
+    df = df.map(lambda line: line.split("\t"))
+    df = spark.createDataFrame(df, schema = ["ID", "subject", "predicate", "object", "value"])
     
-    # make wikipedia link
+    # produce and consume Tweets with Kafka
     
-    # cross with Yago
-    topic = random.choice(yago_tags)
+    topic_in = "raw_articles"
+    topic_out = "facts"
     
-    # get table of relationships
-    # Yago_Facts.tsv is chached, filter on `topic`
-    # pick a random relationship
-    # express it as a string
+    kafka = KafkaClient('localhost:9092')
+    producer = SimpleProducer(kafka)
     
-    # produce tweet to Kafka
+    consumer = KafkaConsumer(topic_in,
+            auto_offset_reset='earliest',
+            value_deserializer=lambda m: json.loads(m.decode('utf-8')))
+
+    print("Kafka started.")
+    
+    for msg in consumer:
+        # extract
+        tweet = msg.value
+        print(tweet["title"])
+        tags = getTags(tweet)
+        yago_tags = extractYago(tags)
+        if len(yago_tags) == 0:
+            fact = "\nNothing found about this article\n"
+        else:
+            tag = "<" + random.choice(yago_tags) + ">"
+    
+            fact = data_enhancer(tag)
+        
+        print("\n"+fact+"\n")
+        
+        tweet["fact"] = fact
+        to_send = tweet
+
+        # produce tweet to Kafka
+        producer.send_messages(topic_out, json.dumps(to_send).encode("utf-8"))
+        # sleep so that the NYT API doesn't complain
+        sleep(60)
     
