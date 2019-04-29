@@ -85,7 +85,7 @@ def data_enhancer(subject):
     
     # make sure data is not empty
     if len(subset) == 0:
-        return "\nNo Info...\n"
+        return "No info found in the Yago data.\nhttps://www.mpi-inf.mpg.de/departments/databases-and-information-systems/research/yago-naga/yago/"
     
     # get a fact at random
     fact = random.choice(subset).asDict()
@@ -94,7 +94,7 @@ def data_enhancer(subject):
     url = "https://en.wikipedia.org/wiki/" + fact["object"].replace("<", "").replace(">", "")
     
     # generate the tweet
-    tweet = str_cleaner(f'{fact["subject"]} {fact["predicate"]} {fact["object"]}') + f'\n {url}'
+    tweet = str_cleaner(f'FACT: {fact["subject"]} {fact["predicate"]} {fact["object"]}') + f'\n {url}'
     
     return tweet
 
@@ -132,7 +132,7 @@ if __name__ == "__main__":
         tags = getTags(tweet)
         yago_tags = extractYago(tags)
         if len(yago_tags) == 0:
-            fact = "\nNothing found about this article on Yago.\n"
+            fact = "No info found in the Yago data.\nhttps://www.mpi-inf.mpg.de/departments/databases-and-information-systems/research/yago-naga/yago/"
         else:
             tag = "<" + random.choice(yago_tags) + ">"
     
