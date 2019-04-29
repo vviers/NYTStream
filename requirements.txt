@@ -1,6 +1,0 @@
-oauth2client
-google-cloud-translate
-googletrans
-tweepy
-numpy
-pandas

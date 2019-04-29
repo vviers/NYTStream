@@ -114,7 +114,7 @@ if __name__ == "__main__":
     
     # produce and consume Tweets with Kafka
     
-    topic_in = "raw_articles"
+    topic_in = "translated"
     topic_out = "facts"
     
     producer = KafkaProducer(bootstrap_servers='localhost:9092')

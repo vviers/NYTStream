@@ -23,8 +23,7 @@ except:
     exit()
     
 # read data from Kafka
-topic_trans = "translated"
-topic_facts = "facts"
+topic_in = "facts"
 
 def tweet(data):
     
@@ -57,35 +56,23 @@ def tweet(data):
 
             n += 1
 
-
-
     try:
         first_tweet = api.update_status(first_twit)
+        sleep(5)
         second_tweet = api.update_status(data["translations"]['abstract'], in_reply_to_status_id = first_tweet.id)
+        sleep(7)
+        third_tweet = api.update_status(data["fact"], in_reply_to_status_id = second_tweet.id)
         print(f"Just Twitted. {data['slug_name']}")
-        return first_tweet.id
     except: print("Couldn't Tweet...")
     
 if __name__ == "__main__":
     
-    # keep a log of all tweeted messages
-    tweeted = {}
 
-    consumer_trans = KafkaConsumer(topic_trans, #auto_offset_reset='earliest',
+    consumer = KafkaConsumer(topic_in, #auto_offset_reset='earliest',
                              value_deserializer=lambda m: json.loads(m.decode('utf-8')))
-    comsumer_facts = KafkaConsumer(topic_facts,
-                            value_deserializer=lambda m: json.loads(m.decode('utf-8')))
 
 
-    for msg in consumer_trans:
+    for msg in consumer:
         # tweet, keep track of tweet id
         tw_id = tweet(msg.value)
-        tweeted[msg.value['slug_name']]=tw_id
-
         sleep(60)
-
-
-    for fac in consumer_fact:
-        if fac.value['slug_name'] in tweeted:
-            api.update_status(fac.value['fact'], in_reply_to_status_id = tweeted[fac.value['slug_name']])
-            print("Tweeted a fact")
