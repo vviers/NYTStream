@@ -1,6 +1,6 @@
 #!/bin/python
 
-from kafka import SimpleProducer, KafkaClient
+from kafka import KafkaProducer, KafkaClient
 import requests
 from time import sleep
 import json
@@ -13,10 +13,9 @@ with open(".credentials", "r") as f:
 seen = set()
 
 # Kafka settings
-topic = 'raw_articles'
+topic_out = 'raw_articles'
 # Kafka producer
-kafka = KafkaClient('localhost:9092')
-producer = SimpleProducer(kafka)
+producer = KafkaProducer(bootstrap_servers="localhost:9092" , request_timeout_ms = 3000000, retries = 20)
 
 while True:
     
@@ -37,10 +36,7 @@ while True:
             print(f"Found a new article:\n\t {article['title']}")
 
             seen.add(article['title'])
-                  
-            with open("some_data_json.txt", "a") as outfile:
-                outfile.write(json.dumps(article) + "\n")
             
-            producer.send_messages(topic, json.dumps(article).encode("utf-8"))
+            producer.send(topic_out, json.dumps(article).encode("utf-8"))
                   
     sleep(240)

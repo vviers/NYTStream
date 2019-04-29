@@ -1,6 +1,6 @@
 import json
 import requests
-from kafka import SimpleProducer, KafkaClient, KafkaConsumer
+from kafka import KafkaProducer, KafkaClient, KafkaConsumer
 from pyspark import SparkContext
 from pyspark.sql import *
 import random
@@ -117,11 +117,10 @@ if __name__ == "__main__":
     topic_in = "raw_articles"
     topic_out = "facts"
     
-    kafka = KafkaClient('localhost:9092')
-    producer = SimpleProducer(kafka)
+    producer = KafkaProducer(bootstrap_servers='localhost:9092')
     
     consumer = KafkaConsumer(topic_in,
-            auto_offset_reset='earliest',
+            #auto_offset_reset='earliest',
             value_deserializer=lambda m: json.loads(m.decode('utf-8')))
 
     print("Kafka started.")
@@ -133,7 +132,7 @@ if __name__ == "__main__":
         tags = getTags(tweet)
         yago_tags = extractYago(tags)
         if len(yago_tags) == 0:
-            fact = "\nNothing found about this article\n"
+            fact = "\nNothing found about this article on Yago.\n"
         else:
             tag = "<" + random.choice(yago_tags) + ">"
     
@@ -145,7 +144,7 @@ if __name__ == "__main__":
         to_send = tweet
 
         # produce tweet to Kafka
-        producer.send_messages(topic_out, json.dumps(to_send).encode("utf-8"))
+        producer.send(topic_out, json.dumps(to_send).encode("utf-8"))
         # sleep so that the NYT API doesn't complain
-        sleep(60)
+        # sleep(60)
     
