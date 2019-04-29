@@ -33,7 +33,8 @@ def tweet(data):
         if isinstance(hasht, str):
             return []
         elif isinstance(hasht, list):
-            return ["#" + re.sub(parentheses, "", h).lower().replace(" ", "").replace(',', '') for h in hasht]
+            return ["#" + re.sub(parentheses, "", h).lower().replace(" ", "")\
+            .replace(',', '').replace("-", "") for h in hasht]
     
     all_hashtags = hashtag(data['des_facet']) + hashtag(data['org_facet']) + hashtag(data['per_facet']) + hashtag(data['geo_facet'])
     
