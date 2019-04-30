@@ -1,32 +1,3 @@
 # ST446 Project - NYT Streaming
-
-## Project Architecture
-
-```
-|-- bash_scripts/
-|  |
-|  |-- startCluster.sh
-|  |-- startKafka.sh
-|  |-- startAPP.sh
-|
-|
-|-- app/
-|  |
-|  |-- static_data/
-|     |-- YagoFacts.tsv
-|     
-|  |-- nytscraper.py
-|  |-- analytics.py
-|  |-- twitter_bot.py
-|  |-- webapp/
-|     |-- index.html
-|     |-- stylesheet.css
-|     |-- D3.js
-|  |
-|  |-- README_APP.md
-|
-| -- README.md
-|
-| -- VVIERS_PROJECT_REPORT.ipynb
-
+### This project consists in building a Twitter bot that translates every new article posted on the website into french, and follows up on each article with a fact about the subject of the article (a place, a person, etc.) obtained from a big knowledge database called Yago.
 ```
