@@ -96,7 +96,7 @@ def data_enhancer(subject):
     
     # make sure data is not empty, else return a wikipedia article
     if len(subset) == 0:
-        return "More context here: https://en.wikipedia.org/wiki/" + subject.replace('<', '').replace('>', '')
+        return "More context here: https://en.wikipedia.org/wiki/" + subject.replace('<', '').replace('>', '').replace(" ", "_")
     
     # get a fact at random
     fact = random.choice(subset).asDict()
