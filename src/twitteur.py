@@ -10,7 +10,7 @@ import random
 import re
 
 # Read my (secret) credentials
-with open(".twittercredentials") as creds:
+with open("../.twittercredentials") as creds:
     consumer_key, consumer_secret, access_token, access_token_secret = creds.read().split("\n")[0:4]
     
 # Authenticate to the Twitter API
@@ -35,7 +35,7 @@ def tweet(data):
         if isinstance(hasht, str):
             return []
         elif isinstance(hasht, list):
-            return ["#" + re.sub(parentheses, "", h).lower().replace(" ", "").replace(',', '') for h in hasht]
+            return ["#" + re.sub(parentheses, "", h).lower().replace(" ", "").replace(',', '').replace("-", "") for h in hasht]
     
     all_hashtags = hashtag(data['des_facet']) + hashtag(data['org_facet']) + hashtag(data['per_facet']) + hashtag(data['geo_facet'])
     
@@ -62,9 +62,9 @@ def tweet(data):
 
     try:
         first_tweet = api.update_status(first_twit)
-        sleep(5)
+        sleep(15)
         second_tweet = api.update_status(data["translations"]['abstract'], in_reply_to_status_id = first_tweet.id)
-        sleep(7)
+        sleep(27)
         third_tweet = api.update_status(data["fact"], in_reply_to_status_id = second_tweet.id)
         print(f"Just Twitted. {data['slug_name']}")
     except: print("Couldn't Tweet...")
@@ -78,4 +78,4 @@ if __name__ == "__main__":
     for msg in consumer:
         # tweet, keep track of tweet id, sleep so it's not too "bot-ish" when high traffic
         tw_id = tweet(msg.value)
-        sleep(60)
+        sleep(280)

@@ -9,7 +9,7 @@ import random
 from time import sleep
 
 # NYT Credentials
-with open(".credentials", "r") as f:
+with open("../.credentials", "r") as f:
     key = f.read().strip("\n")
 
 
@@ -96,13 +96,13 @@ def data_enhancer(subject):
     
     # make sure data is not empty, else return a wikipedia article
     if len(subset) == 0:
-        return "More context here: https://en.wikipedia.org/wiki/" + "subject"
+        return "More context here: https://en.wikipedia.org/wiki/" + subject.replace('<', '').replace('>', '')
     
     # get a fact at random
     fact = random.choice(subset).asDict()
     
     # get URL of object
-    url = "https://en.wikipedia.org/wiki/" + fact["object"].replace("<", "").replace(">", "")
+    url = "https://en.wikipedia.org/wiki/" + fact["object"].replace("<", "").replace(">", "").replace(" ", "_")
     
     # generate the tweet
     tweet = str_cleaner(f'FACT: {fact["subject"]} {fact["predicate"]} {fact["object"]}') + f'\n {url}'
@@ -119,7 +119,7 @@ if __name__ == "__main__":
     .appName("NYT_Yago").getOrCreate()
     
     # Load Static Yago Data
-    df = sc.textFile("file:///home/vincent/NYT_Stream/data/yagoFacts.tsv")
+    df = sc.textFile("gs://nyt-project/yagoFacts.tsv")
     df = df.map(lambda line: line.split("\t"))
     df = spark.createDataFrame(df, schema = ["ID", "subject", "predicate", "object", "value"])
     

@@ -6,7 +6,7 @@ from time import sleep
 import json
 
 # Read API key
-with open(".credentials", "r") as f:
+with open("../.credentials", "r") as f:
     key = f.read().strip("\n")
     
 # create a set to keep track of already seen articles
