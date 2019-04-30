@@ -27,8 +27,9 @@ if __name__=='__main__':
         r = requests.get(url)
 
         while r.status_code != 200:
-            print(f"Something wrong happened... Error code: {r.status_code}. Retrying in 60min...")
+            print(f"Something wrong happened... Error code: {r.status_code}. Retrying in 60sec...")
             sleep(60)
+            r = requests.get(url)
 
         data = r.json()
 
