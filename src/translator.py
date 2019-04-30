@@ -1,3 +1,5 @@
+#!/bin/python
+
 from googletrans import Translator
 import json
 from kafka import KafkaProducer, KafkaClient, KafkaConsumer
@@ -5,17 +7,19 @@ from time import sleep
 
 if __name__=="__main__":
 
+        # kafka settings
         topic_in = "raw_articles"
         topic_out = "translated"
 
         producer = KafkaProducer(bootstrap_servers = 'localhost:9092', retries = 2000)
 
         consumer = KafkaConsumer(topic_in,
-                        #auto_offset_reset='earliest',
+                        #auto_offset_reset='earliest', # for dev only
                         value_deserializer=lambda m: json.loads(m.decode('utf-8')))
 
-        print("Kafka started.")
+        print("Kafka started for translator.")
 
+        # create Translator instance
         translator = Translator()
 
         for msg in consumer:
@@ -30,6 +34,7 @@ if __name__=="__main__":
                 translation = translator.translate(tweet['abstract'], src="en", dest="fr")
                 abstract_translated = translation.text
 
+                # append data 
                 tweet["translations"] = {"title":title_translated, "abstract":abstract_translated}
                 to_send = tweet
 

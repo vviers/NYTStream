@@ -17,26 +17,28 @@ topic_out = 'raw_articles'
 # Kafka producer
 producer = KafkaProducer(bootstrap_servers="localhost:9092" , request_timeout_ms = 3000000, retries = 20)
 
-while True:
-    
-    # Limit to articles published in the last 24 hours, query limit is 20 anyways...
-    url = f'https://api.nytimes.com/svc/news/v3/content/all/all/24.json?api-key={key}'
+if __name__=='__main__':
 
-    r = requests.get(url)
+    while True:
+        
+        # Limit to articles published in the last 24 hours, query limit is 20 anyways...
+        url = f'https://api.nytimes.com/svc/news/v3/content/all/all/24.json?api-key={key}'
 
-    while r.status_code != 200:
-        print(f"Something wrong happened... Error code: {r.status_code}. Retrying...")
-        sleep(10)
+        r = requests.get(url)
 
-    data = r.json()
+        while r.status_code != 200:
+            print(f"Something wrong happened... Error code: {r.status_code}. Retrying in 60min...")
+            sleep(60)
 
-    for article in data["results"]:
-        if article['title'] not in seen:
+        data = r.json()
 
-            print(f"Found a new article:\n\t {article['title']}")
+        for article in data["results"]:
+            if article['title'] not in seen:
 
-            seen.add(article['title'])
-            
-            producer.send(topic_out, json.dumps(article).encode("utf-8"))
-                  
-    sleep(240)
+                print(f"Found a new article:\n\t {article['title']}")
+
+                seen.add(article['title'])
+                
+                producer.send(topic_out, json.dumps(article).encode("utf-8"))
+                      
+        sleep(240)

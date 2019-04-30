@@ -1,3 +1,5 @@
+#!/bin/python
+
 import json
 import requests
 from kafka import KafkaProducer, KafkaClient, KafkaConsumer
@@ -37,17 +39,25 @@ def getSemantic(concept, concept_type, key = key):
     if len(concept) == 0:
         return []
         
-    # build query
+    # build Semantic API query
     url = f'http://api.nytimes.com/svc/semantic/v2/concept/name/{types[concept_type]}/{concept}.json?fields=all&api-key={key}'
     
     # query the API, return JSON (as a python dict)
     result_dic = requests.get(url)
+    # if didn't succeed, retry once
     if result_dic.status_code != 200:
-        print(f"Something went wrong with the API call... Status Code: {result_dic.status_code}")
-        return []
+        print(f"Something went wrong with the API call... Status Code: {result_dic.status_code}. Retrying once...")
+        sleep(90)
+        result_dic = requests.get(url)
+        if result_dic.status_code != 200:
+            print(f"Something went wrong with the API call... Status Code: {result_dic.status_code}.")
+            return []
+
+    # if empty, return empty
     if len(result_dic.json()['results']) == 0:
         return []
     
+    # else return
     return result_dic.json()['results'][0]
 
 
@@ -79,13 +89,14 @@ def str_cleaner(s):
     return s.replace("<", "").replace(">", "").replace("_", " ")
 
 def data_enhancer(subject):
-    
+    '''Query the Yago database for a random fact about a New York Times Article'''
+
     # subset the data to the subject
     subset = df.filter(f'subject == "{subject}"').collect()
     
-    # make sure data is not empty
+    # make sure data is not empty, else return a wikipedia article
     if len(subset) == 0:
-        return "No info found in the Yago data.\nhttps://www.mpi-inf.mpg.de/departments/databases-and-information-systems/research/yago-naga/yago/"
+        return "More context here: https://en.wikipedia.org/wiki/" + "subject"
     
     # get a fact at random
     fact = random.choice(subset).asDict()

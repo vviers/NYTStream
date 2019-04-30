@@ -1,4 +1,5 @@
 #!/bin/python
+
 import json
 from tweepy import OAuthHandler
 from tweepy import Stream
@@ -18,11 +19,12 @@ auth.set_access_token(access_token, access_token_secret)
 
 try:
     api = tweepy.API(auth)
+    print("Connected to Twitter API.")
 except:
     print("Could not connect to Twitter API.")
     exit()
     
-# read data from Kafka
+# Kafka settings
 topic_in = "facts"
 
 def tweet(data):
@@ -37,12 +39,14 @@ def tweet(data):
     
     all_hashtags = hashtag(data['des_facet']) + hashtag(data['org_facet']) + hashtag(data['per_facet']) + hashtag(data['geo_facet'])
     
+    # first tweet is translated title + url + some hashtags
     first_twit = f'{data["translations"]["title"]}\n{data["url"]}'
     total_length = len(first_twit)
+
     # keep track of already used hashtag
     used_hashtags = set()
 
-    # 20 tries in total
+    # 20 tries in total to fill the tweets with hashtags. A tweet limit is 240 characters.
     if len(all_hashtags) > 0:
         n=0
         while total_length < 240 and n < 20:
@@ -67,12 +71,11 @@ def tweet(data):
     
 if __name__ == "__main__":
     
-
     consumer = KafkaConsumer(topic_in, #auto_offset_reset='earliest',
                              value_deserializer=lambda m: json.loads(m.decode('utf-8')))
 
 
     for msg in consumer:
-        # tweet, keep track of tweet id
+        # tweet, keep track of tweet id, sleep so it's not too "bot-ish" when high traffic
         tw_id = tweet(msg.value)
         sleep(60)
